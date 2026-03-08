@@ -1,0 +1,284 @@
+/* ============================================================
+   layout.css  —  Header, nav dots, progress bar, hero, modes
+   ============================================================ */
+
+/* ---- Scanlines overlay ---- */
+#scanlines {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent, transparent 2px,
+    rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px
+  );
+  z-index: 9999;
+}
+
+/* ---- Sticky header ---- */
+#header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  background: rgba(2, 2, 16, 0.92);
+  border-bottom: 1px solid var(--border);
+  z-index: 1000;
+  backdrop-filter: blur(12px);
+}
+
+#header h1 {
+  font-family: var(--font-display);
+  font-size: 14px;
+  color: var(--cyan);
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  text-shadow: 0 0 20px var(--cyan);
+}
+
+#system-time {
+  font-size: 11px;
+  color: var(--cyan);
+  opacity: 0.7;
+}
+
+#mode-display {
+  font-size: 11px;
+  color: var(--green);
+  letter-spacing: 2px;
+}
+
+/* ---- Scroll progress bar ---- */
+#progress-bar {
+  position: fixed;
+  top: 50px; left: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--cyan), var(--purple));
+  box-shadow: 0 0 8px var(--cyan);
+  z-index: 1001;
+  transition: width 0.1s;
+  width: 0%;
+}
+
+/* ---- Side nav dots ---- */
+#nav-dots {
+  position: fixed;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  z-index: 1000;
+}
+
+.nav-dot {
+  width: 8px; height: 8px;
+  border: 1px solid rgba(0,245,255,0.4);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+}
+
+.nav-dot::after {
+  content: attr(data-label);
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--font-display);
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: var(--cyan);
+  opacity: 0;
+  transition: opacity 0.3s;
+  white-space: nowrap;
+}
+
+.nav-dot:hover::after,
+.nav-dot.active::after { opacity: 1; }
+
+.nav-dot.active,
+.nav-dot:hover {
+  background: var(--cyan);
+  box-shadow: 0 0 10px var(--cyan);
+}
+
+/* ---- Generic section base ---- */
+section {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 40px 60px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ---- Hero ---- */
+#hero {
+  position: relative;
+  min-height: 100vh;
+}
+
+#canvas-container {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+}
+
+.hero-overlay {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  pointer-events: none;
+}
+
+.hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 5vw, 52px);
+  font-weight: 900;
+  color: var(--cyan);
+  letter-spacing: 6px;
+  text-shadow: 0 0 40px var(--cyan), 0 0 80px rgba(0,245,255,0.3);
+  margin-bottom: 16px;
+  animation: fadeInUp 1s ease forwards;
+}
+
+.hero-sub {
+  font-size: 13px;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  animation: fadeInUp 1s 0.3s ease both;
+}
+
+.scroll-hint {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  animation: pulse 2s infinite;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.scroll-hint span {
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: rgba(0,245,255,0.5);
+  text-transform: uppercase;
+}
+
+.scroll-arrow {
+  width: 1px; height: 40px;
+  background: linear-gradient(to bottom, var(--cyan), transparent);
+  animation: scrollDown 1.5s infinite;
+}
+
+/* ---- Mode selector ---- */
+#section-modes {
+  min-height: 50vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+  background: linear-gradient(180deg, var(--bg), rgba(0,5,20,1));
+}
+
+.modes-content {
+  text-align: center;
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.modes-content.visible { opacity: 1; transform: translateY(0); }
+
+.mode-btns {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 40px;
+  flex-wrap: wrap;
+}
+
+.mode-btn {
+  background: rgba(0,0,0,0.7);
+  border: 1px solid var(--purple);
+  color: var(--purple);
+  padding: 12px 28px;
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  transition: all 0.3s;
+  clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+}
+
+.mode-btn:hover,
+.mode-btn.active {
+  background: var(--purple);
+  color: white;
+  box-shadow: 0 0 20px var(--purple);
+}
+
+#uptime-display {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 11px;
+  color: rgba(255,255,255,0.3);
+  letter-spacing: 2px;
+}
+
+#uptime { color: var(--green); }
+
+/* ---- Log section ---- */
+#section-log {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+  background: var(--bg);
+}
+
+.log-wrap {
+  max-width: 600px;
+  width: 100%;
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.log-wrap.visible { opacity: 1; transform: translateY(0); }
+
+#neural-log-content {
+  background: rgba(0,10,20,0.8);
+  border: 1px solid rgba(0,255,136,0.2);
+  padding: 24px;
+  backdrop-filter: blur(10px);
+  margin-top: 30px;
+}
+
+.log-line {
+  font-size: 11px;
+  color: rgba(0,255,136,0.6);
+  line-height: 2;
+  animation: fadeIn 0.3s ease;
+}

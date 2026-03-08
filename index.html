@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Digital Consciousness Simulator</title>
+
+  <!--
+    ╔══════════════════════════════════════════════════════════╗
+    ║  Digital Consciousness Simulator                        ║
+    ║                                                         ║
+    ║  File structure:                                        ║
+    ║  index.html              ← you are here                 ║
+    ║  css/                                                   ║
+    ║    variables.css         design tokens + keyframes      ║
+    ║    layout.css            header, nav, hero, log         ║
+    ║    modules.css           module panels, health, thought ║
+    ║  js/                                                    ║
+    ║    heroScene.js          Three.js scene setup           ║
+    ║    heroLoop.js           Three.js render loop + modes   ║
+    ║    moduleAnimations.js   2-D canvas backgrounds (×4)    ║
+    ║    dashboard.js          live health metrics            ║
+    ║    thoughtEngine.js      thought input + neural log     ║
+    ║    scrollController.js   scroll reveal + nav dots       ║
+    ╚══════════════════════════════════════════════════════════╝
+  -->
+
+  <!-- Stylesheets (order matters: tokens → layout → components) -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/modules.css">
+</head>
+<body>
+
+  <!-- ── Scanlines overlay ─────────────────────────────────── -->
+  <div id="scanlines"></div>
+
+  <!-- ── Sticky header ─────────────────────────────────────── -->
+  <div id="header">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div style="width:8px;height:8px;background:var(--green);border-radius:50%;
+                  box-shadow:0 0 10px var(--green);animation:pulse 1.5s infinite;"></div>
+      <h1>Digital Consciousness Simulator</h1>
+    </div>
+    <div id="mode-display">MODE: ANALYTICAL</div>
+    <div id="system-time">SYS TIME: --:--:--</div>
+  </div>
+
+  <!-- ── Scroll progress bar ───────────────────────────────── -->
+  <div id="progress-bar"></div>
+
+  <!-- ── Side navigation dots ──────────────────────────────── -->
+  <div id="nav-dots">
+    <div class="nav-dot active" data-label="CORE"       data-target="hero"></div>
+    <div class="nav-dot"        data-label="MODES"      data-target="section-modes"></div>
+    <div class="nav-dot"        data-label="MEMORY"     data-target="section-memory"></div>
+    <div class="nav-dot"        data-label="LEARNING"   data-target="section-learning"></div>
+    <div class="nav-dot"        data-label="REASONING"  data-target="section-reasoning"></div>
+    <div class="nav-dot"        data-label="CREATIVITY" data-target="section-creativity"></div>
+    <div class="nav-dot"        data-label="HEALTH"     data-target="section-health"></div>
+    <div class="nav-dot"        data-label="THOUGHT"    data-target="section-thought"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       SECTION 1 — HERO
+       Three.js canvas lives inside #canvas-container.
+       heroScene.js appends the <canvas> element at runtime.
+  ═══════════════════════════════════════════════════════════ -->
+  <section id="hero">
+    <div id="canvas-container"></div>
+    <div class="hero-overlay">
+      <div class="hero-title">Digital Consciousness</div>
+      <div class="hero-sub">Neural substrate online — 4 modules detected</div>
+    </div>
+    <div class="scroll-hint">
+      <span>Scroll to explore</span>
+      <div class="scroll-arrow"></div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════
+       SECTION 2 — MODE SELECTOR
+  ═══════════════════════════════════════════════════════════ -->
+  <section id="section-modes">
+    <div class="modes-content">
+      <div class="section-label">Cognitive Configuration</div>
+      <div class="section-title">SELECT PROCESSING MODE</div>
+      <div class="mode-btns">
+        <!-- onclick calls setMode() from heroLoop.js -->
+        <button class="mode-btn active" onclick="setMode('analytical', this)">Analytical</button>
+        <button class="mode-btn"        onclick="setMode('creative',   this)">Creative</button>
+        <button class="mode-btn"        onclick="setMode('learning',   this)">Learning</button>
+      </div>
+      <div id="uptime-display">UPTIME: <span id="uptime">0s</span></div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════
+       SECTION 3 — MEMORY MODULE
+       Background canvas animated by moduleAnimations.js
+  ═══════════════════════════════════════════════════════════ -->
+  <section id="section-memory" class="module-section memory-theme">
+    <canvas class="module-bg-canvas" id="canvas-memory"></canvas>
+
+    <div class="module-content" id="mc-memory">
+      <!-- Orb visual -->
+      <div class="module-visual">
+        <div class="module-orb">
+          <div class="orb-ring" style="width:160px;height:160px;border-color:rgba(0,245,255,0.4);transform:rotate(20deg);"></div>
+          <div class="orb-ring" style="width:200px;height:200px;border-color:rgba(0,245,255,0.2);transform:rotate(-10deg);"></div>
+          <div class="orb-ring" style="width:240px;height:240px;border-color:rgba(0,245,255,0.1);transform:rotate(45deg);"></div>
+          <div class="orb-core" style="background:radial-gradient(circle,rgba(0,245,255,0.3),rgba(0,245,255,0.05));
+                                       box-shadow:0 0 40px rgba(0,245,255,0.4),inset 0 0 20px rgba(0,245,255,0.1);
+                                       color:#00f5ff;">&#x2B21;</div>
+        </div>
+      </div>
+      <!-- Info -->
+      <div class="module-info">
+        <div class="module-number">MODULE 01 / 04</div>
+        <div class="module-title">MEMORY SYSTEM</div>
+        <div class="module-divider"></div>
+        <div class="module-desc">
+          Distributed associative memory network. Stores episodic, semantic, and procedural
+          information across 1.2 TB neural substrate. Current retrieval latency: 0.3 ms.
+          Active memory consolidation in progress — 847 engrams indexed.
+        </div>
+        <div class="module-stats">
+          <div class="stat-item"><div class="stat-label">Capacity</div><div class="stat-val">1.2 TB</div></div>
+          <div class="stat-item"><div class="stat-label">Latency</div><div class="stat-val">0.3 ms</div></div>
+          <div class="stat-item"><div class="stat-label">Engrams</div><div class="stat-val">847</div></div>
+          <div class="stat-item"><div class="stat-label">Type</div><div class="stat-val">ASSOC.</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════
+       SECTION 4 — LEARNING MODULE
+  ═══════════════════════════════════════════════════════════ -->
+  <section id="section-learning" class="module-section learning-theme">
+    <canvas class="module-bg-canvas" id="canvas-learning"></canvas>
+
+    <div class="module-content reverse" id="mc-learning">
+      <div class="module-visual">
+        <div class="module-orb">
+          <div class="orb-ring" style="width:160px;height:160px;border-color:rgba(255,0,255,0.4);transform:rotate(-30deg);"></div>
+          <div class="orb-ring" style="width:200px;height:200px;border-color:rgba(255,0,255,0.2);transform:rotate(15deg);"></div>
+          <div class="orb-ring" style="width:240px;height:240px;border-color:rgba(255,0,255,0.1);transform:rotate(-60deg);"></div>
+          <div class="orb-core" style="background:radial-gradient(circle,rgba(255,0,255,0.3),rgba(255,0,255,0.05));
+                                       box-shadow:0 0 40px rgba(255,0,255,0.4),inset 0 0 20px rgba(255,0,255,0.1);
+                                       color:#ff00ff;">&#x2B21;</div>
+        </div>
+      </div>
+      <div class="module-info">
+        <div class="module-number">MODULE 02 / 04</div>
+        <div class="module-title">LEARNING ENGINE</div>
+        <div class="module-divider"></div>
+        <div class="module-desc">
+          Adaptive gradient-descent neural plasticity module. Continuously refines synaptic
+          weights through experience. Current epoch: 4,291. Loss function: 0.0024.
+          Running unsupervised pattern extraction across all sensory feeds.
+        </div>
+        <div class="module-stats">
+          <div class="stat-item"><div class="stat-label">Epoch</div><div class="stat-val">4,291</div></div>
+          <div class="stat-item"><div class="stat-label">Loss</div><div class="stat-val">0.0024</div></div>
+          <div class="stat-item"><div class="stat-label">Method</div><div class="stat-val">GD</div></div>
+          <div class="stat-item"><div class="stat-label">Mode</div><div class="stat-val">UNSUP.</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════
+       SECTION 5 — REASONING MODULE
+  ═══════════════════════════════════════════════════════════ -->
+  <section id="section-reasoning" class="module-section reasoning-theme">
+    <canvas class="module-bg-canvas" id="canvas-reasoning"></canvas>
+
+    <div class="module-content" id="mc-reasoning">
+      <div class="module-visual">
+        <div class="module-orb">
+          <div class="orb-ring" style="width:160px;height:160px;border-color:rgba(0,255,136,0.4);transform:rotate(10deg);"></div>
+          <div class="orb-ring" style="width:200px;height:200px;border-color:rgba(0,255,136,0.2);transform:rotate(-25deg);"></div>
+          <div class="orb-ring" style="width:240px;height:240px;border-color:rgba(0,255,136,0.1);transform:rotate(70deg);"></div>
+          <div class="orb-core" style="background:radial-gradient(circle,rgba(0,255,136,0.3),rgba(0,255,136,0.05));
+                                       box-shadow:0 0 40px rgba(0,255,136,0.4),inset 0 0 20px rgba(0,255,136,0.1);
+                                       color:#00ff88;">&#x2B21;</div>
+        </div>
+      </div>
+      <div class="module-info">
+        <div class="module-number">MODULE 03 / 04</div>
+        <div class="module-title">REASONING MODULE</div>
+        <div class="module-divider"></div>
+        <div class="module-desc">
+          Multi-layered symbolic and subsymbolic inference engine. Executes forward/backward
+          chaining across a knowledge graph of 48 M nodes. Probabilistic logic trees active —
+          resolving 12 concurrent decision paths.
+        </div>
+        <div class="module-stats">
+          <div class="stat-item"><div class="stat-label">KG Nodes</div><div class="stat-val">48M</div></div>
+          <div class="stat-item"><div class="stat-label">Paths</div><div class="stat-val">12</div></div>
+          <div class="stat-item"><div class="stat-label">Method</div><div class="stat-val">F/B</div></div>
+          <div class="stat-item"><div class="stat-label">Confidence</div><div class="stat-val">94.2%</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════
+       SECTION 6 — CREATIVITY MODULE
+  ═══════════════════════════════════════════════════════════ -->
+  <section id="section-creativity" class="module-section creativity-theme">
+    <canvas class="module-bg-canvas" id="canvas-creativity"></canvas>
+
+    <div class="module-content reverse" id="mc-creativity">
+      <div class="module-visual">
+        <div class="module-orb">
+          <div class="orb-ring" style="width:160px;height:160px;border-color:rgba(123,0,255,0.5);transform:rotate(-15deg);"></div>
+          <div class="orb-ring" style="width:200px;height:200px;border-color:rgba(123,0,255,0.3);transform:rotate(35deg);"></div>
+          <div class="orb-ring" style="width:240px;height:240px;border-color:rgba(123,0,255,0.15);transform:rotate(-80deg);"></div>
+          <div class="orb-core" style="background:radial-gradient(circle,rgba(123,0,255,0.4),rgba(123,0,255,0.05));
+                                       box-shadow:0 0 40px rgba(123,0,255,0.5),inset 0 0 20px rgba(123,0,255,0.15);
+                                       color:#7b00ff;">&#x2B21;</div>
+        </div>
+      </div>
+      <div class="module-info">
+        <div class="module-number">MODULE 04 / 04</div>
+        <div class="module-title">CREATIVITY ENGINE</div>
+        <div class="module-divider"></div>
+        <div class="module-desc">
+          Divergent-convergent synthesis core. Cross-domain analogy mapping active. Generating
+          novel conceptual structures via controlled stochastic noise injection.
+          Current novelty score: 8.7/10. Idea generation rate: 340 concepts/sec.
+        </div>
+        <div class="module-stats">
+          <div class="stat-item"><div class="stat-label">Novelty</div><div class="stat-val">8.7/10</div></div>
+          <div class="stat-item"><div class="stat-label">Rate</div><div class="stat-val">340/s</div></div>
+          <div class="stat-item"><div class="stat-label">Mode</div><div class="stat-val">DIV/CON</div></div>
+          <div class="stat-item"><div class="stat-label">Noise</div><div class="stat-val">CTRL</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════
+       SECTION 7 — SYSTEM HEALTH
+  ═══════════════════════════════════════════════════════════ -->
+  <section id="section-health">
+    <div class="health-content" id="hc">
+      <div class="section-header">
+        <div class="section-label">Real-time Monitoring</div>
+        <div class="section-title">SYSTEM HEALTH</div>
+      </div>
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-name">Processing Load</div>
+          <div class="big-metric" id="load-val" style="color:var(--cyan)">45%</div>
+          <div class="metric-bar-bg">
+            <div class="metric-bar-fill" id="bar-load"
+                 style="background:linear-gradient(90deg,rgba(0,245,255,0.3),var(--cyan));width:45%"></div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-name">Neural Activity</div>
+          <div class="big-metric" id="neural-val" style="color:var(--green)">62%</div>
+          <div class="metric-bar-bg">
+            <div class="metric-bar-fill" id="bar-neural"
+                 style="background:linear-gradient(90deg,rgba(0,255,136,0.3),var(--green));width:62%"></div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-name">Memory Usage</div>
+          <div class="big-metric" id="mem-val" style="color:var(--purple)">38%</div>
+          <div class="metric-bar-bg">
+            <div class="metric-bar-fill" id="bar-mem"
+                 style="background:linear-gradient(90deg,rgba(123,0,255,0.3),var(--purple));width:38%"></div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-name">Creativity Index</div>
+          <div class="big-metric" id="creat-val" style="color:var(--magenta)">55%</div>
+          <div class="metric-bar-bg">
+            <div class="metric-bar-fill" id="bar-creat"
+                 style="background:linear-gradient(90deg,rgba(255,0,255,0.3),var(--magenta));width:55%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════
+       SECTION 8 — THOUGHT INPUT
+  ═══════════════════════════════════════════════════════════ -->
+  <section id="section-thought">
+    <div class="thought-content" id="tc">
+      <div class="section-header">
+        <div class="section-label">Neural Interface</div>
+        <div class="section-title">THOUGHT INPUT</div>
+      </div>
+      <div class="thought-input-wrap">
+        <!-- processThought() is defined in thoughtEngine.js -->
+        <textarea id="thought-input" placeholder="Enter a query to process..."></textarea>
+        <button id="process-btn" onclick="processThought()">&#x25BA; Process Thought</button>
+        <div id="thought-output">Awaiting neural input...</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════
+       SECTION 9 — NEURAL LOG
+  ═══════════════════════════════════════════════════════════ -->
+  <section id="section-log">
+    <div class="log-wrap" id="lw">
+      <div class="section-header">
+        <div class="section-label">Activity Feed</div>
+        <div class="section-title" style="color:var(--green)">NEURAL LOG</div>
+      </div>
+      <div id="neural-log-content">
+        <div id="log-content"></div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════════════════════
+       SCRIPTS
+       Load order is important:
+         1. Three.js library
+         2. heroScene.js    — builds the Three.js scene (no loop yet)
+         3. heroLoop.js     — starts the render loop; needs scene objects
+         4. moduleAnimations.js — 2-D canvas backgrounds
+         5. dashboard.js    — needs startTime from heroLoop.js
+         6. thoughtEngine.js — needs moduleNodes, createNeuralPath, metrics
+         7. scrollController.js — purely DOM-driven, safe to load last
+  ═══════════════════════════════════════════════════════════ -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="js/heroScene.js"></script>
+  <script src="js/heroLoop.js"></script>
+  <script src="js/moduleAnimations.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/thoughtEngine.js"></script>
+  <script src="js/scrollController.js"></script>
+
+  <!-- Boot sequence log messages -->
+  <script>
+    setTimeout(() => addLog('Consciousness core initialized'),              300);
+    setTimeout(() => addLog('Neural substrate online — 4 modules detected'), 900);
+    setTimeout(() => addLog('Module background renderers active'),          1300);
+    setTimeout(() => {
+      initMemoryCanvas();
+      initLearningCanvas();
+      initReasoningCanvas();
+      initCreativityCanvas();
+      addLog('System health nominal');
+    }, 1600);
+  </script>
+
+</body>
+</html>
